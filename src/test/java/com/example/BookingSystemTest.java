@@ -132,6 +132,10 @@ class BookingSystemTest {
                 .hasMessage(expectedMessage);
     }
 
+    /**
+     * Mockito is instructed to return empty Optional when searching for room.
+     * Then asserts that an exception is thrown with appropriate error message.
+     */
     @Test
     void shouldThrowExceptionWhenRoomDoesNotExist() {
         when(timeProvider.getCurrentTime()).thenReturn(NOW);
@@ -142,6 +146,9 @@ class BookingSystemTest {
                 .hasMessage("Rummet existerar inte");
     }
 
+    /**
+     * Runs bookRoom method with null as startTime then asserts that an exception is thrown.
+     */
     @Test
     void shouldThrowExceptionWhenStartTimeIsNull() {
         assertThatThrownBy(() -> bookingSystem.bookRoom(ROOM_ID, null, FUTURE_END))
@@ -149,6 +156,9 @@ class BookingSystemTest {
                 .hasMessage("Bokning kräver giltiga start- och sluttider samt rum-id");
     }
 
+    /**
+     * Runs bookRoom method with null as endTime then asserts that an exception is thrown.
+     */
     @Test
     void shouldThrowExceptionWhenEndTimeIsNull() {
         assertThatThrownBy(() -> bookingSystem.bookRoom(ROOM_ID, FUTURE_START, null))
@@ -156,6 +166,11 @@ class BookingSystemTest {
                 .hasMessage("Bokning kräver giltiga start- och sluttider samt rum-id");
     }
 
+    /**
+     * Mockito is instructed to throw NotificationException when sending confirmation.
+     * Verifies that booking is still completed successfully despite notification failure.
+     * @throws NotificationException
+     */
     @Test
     void shouldContinueBookingWhenNotificationFails() throws NotificationException {
         when(timeProvider.getCurrentTime()).thenReturn(NOW);
@@ -171,6 +186,10 @@ class BookingSystemTest {
         verify(roomRepository).save(room);
     }
 
+    /**
+     * Mockito is instructed to return list with one available and one booked room.
+     * Verifies that only available rooms are returned from getAvailableRooms method.
+     */
     @Test
     void shouldGetAvailableRooms() {
         Room availableRoom = mock(Room.class);
@@ -185,6 +204,9 @@ class BookingSystemTest {
         assertThat(result).hasSize(1).containsExactly(availableRoom);
     }
 
+    /**
+     * Runs getAvailableRooms method with null as startTime then asserts that an exception is thrown.
+     */
     @Test
     void shouldThrowExceptionWhenStartTimeIsNullInGetAvailableRooms() {
         assertThatThrownBy(() -> bookingSystem.getAvailableRooms(null, FUTURE_END))
@@ -192,6 +214,9 @@ class BookingSystemTest {
                 .hasMessage("Måste ange både start- och sluttid");
     }
 
+    /**
+     * Runs getAvailableRooms method with null as endTime then asserts that an exception is thrown.
+     */
     @Test
     void shouldThrowExceptionWhenEndTimeIsNullInGetAvailableRooms() {
         assertThatThrownBy(() -> bookingSystem.getAvailableRooms(FUTURE_START, null))
@@ -199,6 +224,13 @@ class BookingSystemTest {
                 .hasMessage("Måste ange både start- och sluttid");
     }
 
+    /**
+     * Parameterized test which checks if expected error messages are returned when invalid time frames are given to
+     * getAvailableRooms.
+     * @param startTimeStr
+     * @param endTimeStr
+     * @param expectedMessage
+     */
     @ParameterizedTest
     @CsvSource({
         "FUTURE_START, BEFORE_START, Sluttid måste vara efter starttid"
@@ -212,6 +244,11 @@ class BookingSystemTest {
                 .hasMessage(expectedMessage);
     }
 
+    /**
+     * Mockito is instructed to find existing booking in room.
+     * Verifies that booking is cancelled successfully and confirmation is sent.
+     * @throws NotificationException
+     */
     @Test
     void shouldCancelBookingSuccessfully() throws NotificationException {
         Booking booking = new Booking("booking-123", ROOM_ID, FUTURE_START, FUTURE_END);
@@ -228,6 +265,10 @@ class BookingSystemTest {
         verify(notificationService).sendCancellationConfirmation(booking);
     }
 
+    /**
+     * Mockito is instructed to return false when checking if booking exists.
+     * Verifies that no cancellation is attempted and false is returned.
+     */
     @Test
     void shouldReturnFalseWhenBookingDoesNotExist() {
         when(roomRepository.findAll()).thenReturn(List.of(room));
@@ -240,6 +281,10 @@ class BookingSystemTest {
         verify(roomRepository, never()).save(room);
     }
 
+    /**
+     * Mockito is instructed to find past booking that has already ended.
+     * Then asserts that an exception is thrown when attempting to cancel past booking.
+     */
     @Test
     void shouldThrowExceptionWhenCancellingPastBooking() {
         Booking pastBooking = new Booking("booking-123", ROOM_ID, NOW.minusHours(2), NOW.minusHours(1));
@@ -261,6 +306,11 @@ class BookingSystemTest {
                 .hasMessage("Boknings-id kan inte vara null");
     }
 
+    /**
+     * Mockito is instructed to throw NotificationException when sending cancellation confirmation.
+     * Verifies that cancellation is still completed successfully despite notification failure.
+     * @throws NotificationException
+     */
     @Test
     void shouldContinueCancellationWhenNotificationFails() throws NotificationException {
         Booking booking = new Booking("booking-123", ROOM_ID, FUTURE_START, FUTURE_END);
