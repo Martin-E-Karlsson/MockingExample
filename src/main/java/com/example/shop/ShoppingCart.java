@@ -9,7 +9,7 @@ import java.util.Map;
 public class ShoppingCart {
     private final List<Product> products = new ArrayList<>();
     private final Map<Product, BigDecimal> productDiscounts = new HashMap<>();
-    private BigDecimal totalDiscount = BigDecimal.ZERO;
+    private BigDecimal totalDiscount = BigDecimal.valueOf(1);
 
     public void addProduct(Product product) {
         if (product == null) {
@@ -42,7 +42,7 @@ public class ShoppingCart {
         BigDecimal totalProductDiscounts = productDiscounts.values().stream()
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
         
-        return subtotal.subtract(totalProductDiscounts).subtract(totalDiscount);
+        return subtotal.subtract(totalProductDiscounts).multiply(totalDiscount);
     }
 
     public void applyProductDiscount(Product product, BigDecimal discount) {
@@ -55,7 +55,9 @@ public class ShoppingCart {
         if (discount.compareTo(BigDecimal.ZERO) < 0) {
             throw new IllegalArgumentException("Discount cannot be negative");
         }
-        if (!products.contains(product)) {
+        
+        boolean productExists = products.contains(product);
+        if (!productExists) {
             throw new IllegalArgumentException("Product must be in cart to apply discount");
         }
         
@@ -83,6 +85,6 @@ public class ShoppingCart {
             throw new IllegalArgumentException("Discount cannot be larger than subtotal");
         }
         
-        totalDiscount = discount;
+        totalDiscount = totalDiscount.subtract(discount);
     }
 }
