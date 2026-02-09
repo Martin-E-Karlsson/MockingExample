@@ -1,45 +1,51 @@
 package com.example.shop;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 public class ShoppingCart {
-    private final List<Product> products = new ArrayList<>();
+    private final Map<Product, Integer> products = new HashMap<>();
     private final Map<Product, BigDecimal> productDiscounts = new HashMap<>();
     private BigDecimal totalDiscount = BigDecimal.valueOf(1);
 
     public void addProduct(Product product) {
+        addProduct(product, 1);
+    }
+
+    public void addProduct(Product product, int quantity) {
         if (product == null) {
             throw new IllegalArgumentException("Product cannot be null");
         }
-        products.add(product);
+        if (quantity <= 0) {
+            throw new IllegalArgumentException("Quantity must be positive");
+        }
+        products.merge(product, quantity, Integer::sum);
     }
 
     public void removeProduct(Product product) {
         if (product == null) {
             throw new IllegalArgumentException("Product cannot be null");
         }
-        products.removeIf(p -> p.equals(product));
+        products.remove(product);
         productDiscounts.remove(product);
     }
 
     public int getItemCount() {
-        return products.size();
+        return products.values().stream().mapToInt(Integer::intValue).sum();
     }
 
     public boolean containsProduct(Product product) {
-        return products.contains(product);
+        return products.containsKey(product);
     }
 
     public BigDecimal getTotalPrice() {
-        BigDecimal subtotal = products.stream()
-                .map(Product::getPrice)
+        BigDecimal subtotal = products.entrySet().stream()
+                .map(entry -> entry.getKey().getPrice().multiply(BigDecimal.valueOf(entry.getValue())))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
         
-        BigDecimal totalProductDiscounts = productDiscounts.values().stream()
+        BigDecimal totalProductDiscounts = productDiscounts.entrySet().stream()
+                .map(entry -> entry.getValue().multiply(BigDecimal.valueOf(products.getOrDefault(entry.getKey(), 1))))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
         
         return subtotal.subtract(totalProductDiscounts).multiply(totalDiscount);
@@ -56,7 +62,7 @@ public class ShoppingCart {
             throw new IllegalArgumentException("Discount cannot be negative");
         }
         
-        boolean productExists = products.contains(product);
+        boolean productExists = products.containsKey(product);
         if (!productExists) {
             throw new IllegalArgumentException("Product must be in cart to apply discount");
         }
@@ -77,8 +83,8 @@ public class ShoppingCart {
             throw new IllegalArgumentException("Discount cannot be negative");
         }
         
-        BigDecimal subtotal = products.stream()
-                .map(Product::getPrice)
+        BigDecimal subtotal = products.entrySet().stream()
+                .map(entry -> entry.getKey().getPrice().multiply(BigDecimal.valueOf(entry.getValue())))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
         
         if (discount.compareTo(subtotal) > 0) {
@@ -86,5 +92,29 @@ public class ShoppingCart {
         }
         
         totalDiscount = totalDiscount.subtract(discount);
+    }
+
+    public Map<Product, Integer> getProducts() {
+        return new HashMap<>(products);
+    }
+
+    public void updateProductQuantity(Product product, int quantity) {
+        if (product == null) {
+            throw new IllegalArgumentException("Product cannot be null");
+        }
+        if (quantity < 0) {
+            throw new IllegalArgumentException("Quantity cannot be negative");
+        }
+        
+        if (quantity == 0) {
+            products.remove(product);
+            productDiscounts.remove(product);
+        } else {
+            products.put(product, quantity);
+        }
+    }
+
+    public Map<Product, BigDecimal> getProductDiscounts() {
+        return new HashMap<>(productDiscounts);
     }
 }
