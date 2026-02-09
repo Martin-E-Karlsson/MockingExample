@@ -153,4 +153,89 @@ class ShoppingCartTest {
         assertThat(cart.getItemCount()).isZero();
         assertThat(cart.containsProduct(apple)).isFalse();
     }
+
+    @Test
+    @DisplayName("Should calculate total price for single product")
+    void shouldCalculateTotalPriceForSingleProduct() {
+        // Given
+        Product apple = new Product("Apple", new BigDecimal("1.50"));
+        ShoppingCart cart = new ShoppingCart();
+        cart.addProduct(apple);
+        
+        // When
+        BigDecimal total = cart.getTotalPrice();
+        
+        // Then
+        assertThat(total).isEqualTo(new BigDecimal("1.50"));
+    }
+
+    @Test
+    @DisplayName("Should calculate total price for multiple different products")
+    void shouldCalculateTotalPriceForMultipleDifferentProducts() {
+        // Given
+        Product apple = new Product("Apple", new BigDecimal("1.50"));
+        Product banana = new Product("Banana", new BigDecimal("2.00"));
+        Product orange = new Product("Orange", new BigDecimal("1.25"));
+        ShoppingCart cart = new ShoppingCart();
+        cart.addProduct(apple);
+        cart.addProduct(banana);
+        cart.addProduct(orange);
+        
+        // When
+        BigDecimal total = cart.getTotalPrice();
+        
+        // Then
+        assertThat(total).isEqualTo(new BigDecimal("4.75"));
+    }
+
+    @Test
+    @DisplayName("Should calculate total price for multiple identical products")
+    void shouldCalculateTotalPriceForMultipleIdenticalProducts() {
+        // Given
+        Product apple = new Product("Apple", new BigDecimal("1.50"));
+        ShoppingCart cart = new ShoppingCart();
+        cart.addProduct(apple);
+        cart.addProduct(apple);
+        cart.addProduct(apple);
+        
+        // When
+        BigDecimal total = cart.getTotalPrice();
+        
+        // Then
+        assertThat(total).isEqualTo(new BigDecimal("4.50"));
+    }
+
+    @Test
+    @DisplayName("Should return zero for empty cart total price")
+    void shouldReturnZeroForEmptyCartTotalPrice() {
+        // Given
+        ShoppingCart cart = new ShoppingCart();
+        
+        // When
+        BigDecimal total = cart.getTotalPrice();
+        
+        // Then
+        assertThat(total).isEqualTo(BigDecimal.ZERO);
+    }
+
+    @ParameterizedTest
+    @DisplayName("Should handle various price calculations correctly")
+    @CsvSource({
+        "0.99, 0.99",
+        "10.00, 10.00",
+        "999.99, 999.99",
+        "0.01, 0.01"
+    })
+    void shouldHandleVariousPriceCalculationsCorrectly(String priceStr, String expectedTotalStr) {
+        // Given
+        Product product = new Product("Test Product", new BigDecimal(priceStr));
+        ShoppingCart cart = new ShoppingCart();
+        cart.addProduct(product);
+        
+        // When
+        BigDecimal total = cart.getTotalPrice();
+        
+        // Then
+        assertThat(total).isEqualTo(new BigDecimal(expectedTotalStr));
+    }
 }

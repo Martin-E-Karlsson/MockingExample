@@ -1,5 +1,6 @@
 package com.example.shop;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -26,5 +27,11 @@ public class ShoppingCart {
 
     public boolean containsProduct(Product product) {
         return products.contains(product);
+    }
+
+    public BigDecimal getTotalPrice() {
+        return products.stream()
+                .map(Product::getPrice)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 }
