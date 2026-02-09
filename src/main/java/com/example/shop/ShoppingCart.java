@@ -13,6 +13,13 @@ public class ShoppingCart {
         products.add(product);
     }
 
+    public void removeProduct(Product product) {
+        if (product == null) {
+            throw new IllegalArgumentException("Product cannot be null");
+        }
+        products.removeIf(p -> p.equals(product));
+    }
+
     public int getItemCount() {
         return products.size();
     }
